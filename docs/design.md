@@ -15,7 +15,7 @@ Gin is still en route to version 1.0 in elixir. Gin is currently only so ambitio
 
 ### Gin Store
 
-The gin store is a flat list of entries in a track hub. The bulk consists of sub-directories for each track hub source. A source sub-directory contains entries, one per track. A gin store entry is the pair: .json file and genomic interval set file. The entry pair contains all of the information of that track, considering even the entire store. Most track hubs will store contents hierarchically, gin flattens, not capturing the hierarchy; only leaf nodes. If a track hub specifies an entry's metadata using inheritance, gin stores it flat.
+The gin store is a flat list of entries in a track hub. The bulk consists of sub-directories for each track hub source. A source sub-directory contains entries, one per track. A gin store entry is the pair: .json file and genomic interval set file. The entry pair contains all of the information of that track, considering even the entire store. Most track hubs will store contents hierarchically, gin flattens, not capturing the hierarchy; only leaf nodes. If a track hub specifies an entry's metadata using inheritance, gin resolves the references so it can store metadata self-contained.
 
 **Gin store entry .json**
 
