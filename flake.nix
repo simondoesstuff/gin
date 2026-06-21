@@ -2,7 +2,7 @@
   description = "Rust Giggle";
   inputs = {
     # nix stuff
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     flake-utils.url = "github:numtide/flake-utils";
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";
@@ -40,7 +40,7 @@
             if pkgs.stdenv.isDarwin then
               pkgs.fetchurl {
                 url = "https://hgdownload.soe.ucsc.edu/admin/exe/macOSX.x86_64/liftOver";
-                sha256 = "sha256-9lg7+MXpUrMsZK9tAkpHAQWJPS16RDrByno1iC/8kuA=";
+                sha256 = "sha256-4yXbLOxjyXSvJsLdnlW70vOZ5K14PWnDahdGGiFxh7Y=";
               }
             else
               pkgs.fetchurl {
@@ -70,6 +70,7 @@
         devShells.default = pkgs.mkShellNoCC {
           packages = with pkgs; [
             cargo
+            beamMinimal29Packages.elixir_1_20
             # bio
             htslib # bgzip
             bedtools
