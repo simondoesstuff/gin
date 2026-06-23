@@ -29,6 +29,10 @@ defmodule Gin.Meta.Transformers.Display do
     defaultLabelFields labelFields
     barChartColors barChartMetric barChartUnit barChartLabel barChartBars
     table
+    dataVersion showSubtrackColorOnUi boxedCfg
+    aggregate container
+    thickDrawItem exonArrows exonArrowsDense
+    searchIndex searchTrix showTopScorers
   ]
 
   def transform(raw) do

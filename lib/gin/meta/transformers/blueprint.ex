@@ -50,6 +50,9 @@ defmodule Gin.Meta.Transformers.Blueprint do
     {"disease", :disease, nil},
     {"epirr_id", :epirr_id, nil},
 
+    # FANTOM5 metadata fields
+    {"ontology_id", :sample_id, nil},
+
     # VISION/PSU-specific metadata fields
     {"lab", :analysis_group, nil},
     {"id", :internal_id, nil},
@@ -95,6 +98,7 @@ defmodule Gin.Meta.Transformers.Blueprint do
     sample_id source track_type
     rep mat deg phz src readType
     project
+    category strand sequenceTech group
   ]
 
   # MethBase view codes — all are WGBS-derived bisulfite tracks.
@@ -143,6 +147,22 @@ defmodule Gin.Meta.Transformers.Blueprint do
             end
         end
       end)
+
+    # FANTOM5 sequence_tech — hCAGE/LQhCAGE → CAGE experiment type
+    {attrs, consumed} =
+      case Map.get(meta, "sequence_tech") do
+        nil ->
+          {attrs, consumed}
+
+        raw ->
+          canonical = case raw do
+            "hCAGE" -> "CAGE"
+            "LQhCAGE" -> "CAGE"
+            other -> other
+          end
+          a = if Map.has_key?(attrs, :experiment_type), do: attrs, else: Map.put(attrs, :experiment_type, canonical)
+          {a, MapSet.put(consumed, "metadata.sequence_tech")}
+      end
 
     # SAMPLE_ONTOLOGY_URI — semicolon-separated list of URIs
     {attrs, consumed} =

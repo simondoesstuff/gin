@@ -15,8 +15,10 @@ Status and notes for hubs gin targets or has reviewed.
 | CEMT            | http://www.bcgsc.ca/downloads/eddc/data/CEMT/hub/bcgsc_datahub.txt                             |  3,138 | hg38       | IHEC member (Canadian). Lowercase `metadata` keys; richer set of IHEC fields.                               |
 | ENCODE RNA      | https://storage.googleapis.com/gcp.wenglab.org/hubs/rna22/hub.txt                              | 67,425 | hg38       | ENCODE RNA assays. Adds `eCLIP`, `RAMPAGE`, `CAGE`, `microRNA-seq`, `Control_eCLIP`.                        |
 | VISION          | https://hgdownload.gi.ucsc.edu/hubs/vision/VISION_project/hub.txt                              |  2,140 | hg38       | Hematopoietic epigenome atlas. Uses `include` directives, `mark` / `factor` / `cell` subGroups.             |
+| MethBase (Smith Lab) | http://smithlab.usc.edu/trackdata/methylation/hub.txt                                     | 74,491 | hg19, hg38 | Original MethBase. View codes `v1hmr`–`v5coverage` → `DNA_Methylation`. No sample/donor metadata.           |
+| FANTOM5         | http://fantom.gsc.riken.jp/5/datahub/hub.txt                                                    | 23,746 | hg19, hg38, mm9, mm10, canFam3, rn6, rheMac8, galGal5 | CAGE-seq atlas. `sequence_tech` (`hCAGE`/`LQhCAGE`) → CAGE. `ontology_id` as sample ID. |
 
-**Total reviewed: 137,306 tracks across 7 hubs.**
+**Total reviewed: 235,543 tracks across 9 hubs.**
 
 ---
 
@@ -26,8 +28,6 @@ Hubs we intend to add. Priority order is rough; each should be reviewed with `mi
 
 | Hub                  | URL                                                                       | Notes                                                                                                                                                                              |
 | -------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| MethBase (Smith Lab) | http://smithlab.usc.edu/trackdata/methylation/hub.txt                     | Original MethBase; ~74k tracks, view codes `v1hmr`–`v5coverage`. Already handled in vocab; audit to confirm zero `other`.                                                          |
-| FANTOM5              | http://fantom.gsc.riken.jp/5/datahub/hub.txt                              | CAGE-seq promoter/enhancer atlas. Only ~19 summary tracks in hg19; low priority.                                                                                                   |
 | GTEx RNA-seq         | http://hgdownload.soe.ucsc.edu/hubs/gtex/hub.txt                          | 7,572-sample RNA-seq signal hub. Currently 403 Forbidden from UCSC for programmatic access; investigate.                                                                           |
 | GTEx Analysis        | http://hgdownload.soe.ucsc.edu/hubs/gtexAnalysis/hub.txt                  | ASE and eQTL analysis tracks. Accessible; ~55 bigBed/bigWig tracks.                                                                                                                |
 | Roadmap Epigenomics  | https://vizhub.wustl.edu/VizHub/RoadmapReleaseAll.txt                     | 273 tracks in hg19. Blocked: vizhub.wustl.edu closes TLS mid-handshake for Erlang clients. Metadata keys: `Anatomy`, `Type`, `EID`, `Ethnicity`, `Lab`. Worth fixing or mirroring. |
