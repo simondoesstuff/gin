@@ -8,6 +8,7 @@ defmodule Gin.Meta.Transformers.Core do
       {"track", :name},
       {"shortLabel", :short_label},
       {"longLabel", :long_label},
+      {"description", :description},
       {"_assembly", :assembly},
       {"bigDataUrl", :big_data_url}
     ])

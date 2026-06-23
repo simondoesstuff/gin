@@ -16,6 +16,7 @@ defmodule Gin.Meta.GinMeta do
     :name,
     :short_label,
     :long_label,
+    :description,
     :assembly,
     :track_type,
     :big_data_url,
@@ -31,6 +32,7 @@ defmodule Gin.Meta.GinMeta do
           name: String.t() | nil,
           short_label: String.t() | nil,
           long_label: String.t() | nil,
+          description: String.t() | nil,
           assembly: String.t() | nil,
           track_type: String.t() | nil,
           big_data_url: String.t() | nil,
@@ -94,14 +96,18 @@ defmodule Gin.Meta.GinMeta.Experiment do
 
   defstruct [
     :id,
+    :accession,
     :type,
+    :target,
     :molecule,
     :epirr_id
   ]
 
   @type t :: %__MODULE__{
           id: String.t() | nil,
+          accession: String.t() | nil,
           type: String.t() | nil,
+          target: String.t() | nil,
           molecule: String.t() | nil,
           epirr_id: String.t() | nil
         }

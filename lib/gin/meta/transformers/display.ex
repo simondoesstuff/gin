@@ -16,6 +16,9 @@ defmodule Gin.Meta.Transformers.Display do
     autoScale maxHeightPixels windowingFunction
     yLineMark yLineOnOff smoothingWindow alwaysZero
     graphTypeDefault gridDefault negateValues
+    centerLabelsDense darkerLabels height hoverMetadata
+    viewLimits viewUi colorByStrand
+    configurable
   ]
 
   def transform(raw) do

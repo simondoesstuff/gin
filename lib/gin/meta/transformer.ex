@@ -58,7 +58,9 @@ defmodule Gin.Meta.Transformer do
     experiment =
       pick(a, %{
         id: :experiment_id,
+        accession: :accession,
         type: :experiment_type,
+        target: :experiment_target,
         molecule: :molecule,
         epirr_id: :epirr_id
       })
@@ -79,6 +81,7 @@ defmodule Gin.Meta.Transformer do
       name: a[:name],
       short_label: a[:short_label],
       long_label: a[:long_label],
+      description: a[:description],
       assembly: a[:assembly],
       track_type: a[:track_type],
       big_data_url: a[:big_data_url],

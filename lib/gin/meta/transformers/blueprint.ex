@@ -8,6 +8,8 @@ defmodule Gin.Meta.Transformers.Blueprint do
 
   alias Gin.Meta.Vocab
 
+  # Uppercase keys follow Blueprint/IHEC convention; lowercase variants handle
+  # ENCODE and other hubs that use lowercase metadata keys.
   @metadata_mappings [
     {"BIOMATERIAL_TYPE", :biomaterial_type, &Vocab.BiomaterialType.normalize/1},
     {"MOLECULE", :molecule, &Vocab.Molecule.normalize/1},
@@ -15,36 +17,72 @@ defmodule Gin.Meta.Transformers.Blueprint do
     {"CELL_TYPE", :cell_type, nil},
     {"DONOR_ID", :donor_id, nil},
     {"DONOR_AGE", :donor_age, nil},
+    {"age", :donor_age, nil},
     {"DONOR_SEX", :donor_sex, &Vocab.Sex.normalize/1},
-    # SEX is used by some hubs as a synonym for DONOR_SEX
     {"SEX", :donor_sex, &Vocab.Sex.normalize/1},
+    {"sex", :donor_sex, &Vocab.Sex.normalize/1},
     {"DONOR_ETHNICITY", :donor_ethnicity, nil},
     {"DONOR_HEALTH_STATUS", :donor_health_status, nil},
     {"DISEASE", :disease, nil},
-    # TISSUE_TYPE appears in some Blueprint tracks in metadata instead of subGroups
     {"TISSUE_TYPE", :tissue, nil},
     {"SAMPLE_ID", :sample_id, nil},
     {"EXPERIMENT_ID", :experiment_id, nil},
+    {"accession", :accession, nil},
     {"EPIRR_ID", :epirr_id, nil},
     {"ALIGNMENT_SOFTWARE", :alignment_software, nil},
     {"ALIGNMENT_SOFTWARE_VERSION", :alignment_software_version, nil},
     {"ANALYSIS_SOFTWARE", :analysis_software, nil},
-    {"ANALYSIS_SOFTWARE_VERSION", :analysis_software_version, nil}
+    {"ANALYSIS_SOFTWARE_VERSION", :analysis_software_version, nil},
+    {"description", :description, nil},
+
+    # Lowercase variants — used by CEMT/IHEC and some other hubs
+    {"biomaterial_type", :biomaterial_type, &Vocab.BiomaterialType.normalize/1},
+    {"molecule", :molecule, &Vocab.Molecule.normalize/1},
+    {"experiment_type", :experiment_type, &Vocab.ExperimentType.normalize/1},
+    {"cell_type", :cell_type, nil},
+    {"tissue_type", :tissue, nil},
+    {"sample_id", :sample_id, nil},
+    {"donor_id", :donor_id, nil},
+    {"donor_age", :donor_age, nil},
+    {"donor_sex", :donor_sex, &Vocab.Sex.normalize/1},
+    {"donor_ethnicity", :donor_ethnicity, nil},
+    {"donor_health_status", :donor_health_status, nil},
+    {"disease", :disease, nil},
+    {"epirr_id", :epirr_id, nil},
+
+    # CEMT/IHEC fields — consumed to keep `other` clean, not assembled into GinMeta
+    {"reference_registry_id", :epirr_id, nil},
+    {"biomaterial_provider", :biomaterial_provider, nil},
+    {"donor_age_unit", :donor_age_unit, nil},
+    {"donor_life_stage", :donor_life_stage, nil},
+    {"tissue_depot", :tissue_depot, nil},
+    {"collection_method", :collection_method, nil},
+    {"markers", :markers, nil},
+    {"passage_if_expanded", :passage_if_expanded, nil},
+    {"passage", :passage, nil},
+    {"line", :cell_line, nil},
+    {"batch", :batch, nil},
+    {"differentiation_method", :differentiation_method, nil},
+    {"differentiation_stage", :differentiation_stage, nil},
+    {"lineage", :lineage, nil}
   ]
 
   # Candidate subGroup keys for each biological dimension, in priority order
-  @cell_type_sg_keys ~w[sample_description cell_type cellType]
+  @cell_type_sg_keys ~w[sample_description cell_type cellType biosample]
   @tissue_sg_keys ~w[sample_source tissue Tissue TISSUE_TYPE]
   @experiment_sg_keys ~w[experiment assay]
   @analysis_group_sg_keys ~w[analysis_group analysisGroup lab]
   @analysis_type_sg_keys ~w[analysis_type analysisType]
   @sample_barcode_sg_keys ~w[sample_barcode sampleBarcode barcode]
+  @target_sg_keys ~w[target]
 
   # Recognized subGroups keys that duplicate fields we get from metadata.
   # Always consume them to keep `other` clean, but don't override metadata values.
   @redundant_sg_keys ~w[
     sample_description sample_description_3 sample_description_2
-    experiment view
+    experiment view data_type
+    Comparison NeuN Smooth
+    sample_id source track_type
   ]
 
   def transform(raw) do
@@ -64,8 +102,13 @@ defmodule Gin.Meta.Transformers.Blueprint do
             {a, c}
 
           raw_val ->
-            val = apply_norm(raw_val, norm_fn)
-            {Map.put(a, field, val), MapSet.put(c, "metadata.#{mk}")}
+            # Don't overwrite a field already set by a higher-priority mapping
+            if Map.has_key?(a, field) do
+              {a, MapSet.put(c, "metadata.#{mk}")}
+            else
+              val = apply_norm(raw_val, norm_fn)
+              {Map.put(a, field, val), MapSet.put(c, "metadata.#{mk}")}
+            end
         end
       end)
 
@@ -95,6 +138,29 @@ defmodule Gin.Meta.Transformers.Blueprint do
            MapSet.put(consumed, "metadata.DISEASE_ONTOLOGY_URI")}
       end
 
+    # Lowercase URI variants (CEMT/IHEC style)
+    {attrs, consumed} =
+      case Map.get(meta, "sample_ontology_uri") do
+        nil ->
+          {attrs, consumed}
+
+        raw ->
+          uris = raw |> String.split(";") |> Enum.map(&String.trim/1) |> Enum.reject(&(&1 == ""))
+          a = if Map.has_key?(attrs, :sample_ontology_uri), do: attrs, else: Map.put(attrs, :sample_ontology_uri, uris)
+          {a, MapSet.put(consumed, "metadata.sample_ontology_uri")}
+      end
+
+    {attrs, consumed} =
+      case Map.get(meta, "disease_ontology_uri") do
+        nil ->
+          {attrs, consumed}
+
+        raw ->
+          uris = raw |> String.split(";") |> Enum.map(&String.trim/1) |> Enum.reject(&(&1 == ""))
+          a = if Map.has_key?(attrs, :disease_ontology_uri), do: attrs, else: Map.put(attrs, :disease_ontology_uri, uris)
+          {a, MapSet.put(consumed, "metadata.disease_ontology_uri")}
+      end
+
     {attrs, consumed}
   end
 
@@ -105,16 +171,16 @@ defmodule Gin.Meta.Transformers.Blueprint do
   defp from_subgroups(attrs, consumed, %{"subGroups" => sg}) when is_map(sg) do
     lifts = [
       {:cell_type, @cell_type_sg_keys, nil},
-      {:tissue, @tissue_sg_keys, nil},
+      {:tissue, @tissue_sg_keys, &Vocab.Tissue.normalize/1},
       {:analysis_group, @analysis_group_sg_keys, nil},
       {:analysis_type, @analysis_type_sg_keys, nil},
       {:sample_barcode, @sample_barcode_sg_keys, nil},
-      {:experiment_type, @experiment_sg_keys, &Vocab.ExperimentType.normalize/1}
+      {:experiment_type, @experiment_sg_keys, &lift_experiment_type/1},
+      {:experiment_target, @target_sg_keys, nil}
     ]
 
     {attrs, consumed} =
       Enum.reduce(lifts, {attrs, consumed}, fn {field, keys, norm_fn}, {a, c} ->
-        # Always consume the matching key even if we don't use its value.
         case find_first(sg, keys) do
           nil ->
             {a, c}
@@ -152,14 +218,47 @@ defmodule Gin.Meta.Transformers.Blueprint do
     end)
   end
 
+  # Experiment type normalizer that handles three cases:
+  #   1. Direct vocab match → canonical
+  #   2. ENCODE structured format (e.g. "TF_ChIP_seq_CTCF") → canonical (target handled separately via subGroups.target)
+  #   3. Opaque sample code (all digits) → treat as unknown so it doesn't pollute the field
+  defp lift_experiment_type(raw) do
+    cond do
+      sample_code?(raw) ->
+        {:unknown, raw}
+
+      true ->
+        case Vocab.ExperimentType.normalize(raw) do
+          {:ok, _} = ok -> ok
+          {:unknown, _} -> try_structured(raw)
+        end
+    end
+  end
+
+  defp sample_code?(val), do: String.match?(val, ~r/^\d+$/)
+
+  defp try_structured(raw) do
+    case Vocab.ExperimentType.parse_structured(raw) do
+      {:ok, canonical, _target} -> {:ok, canonical}
+      :error -> {:unknown, raw}
+    end
+  end
+
   # If no normalizer, return raw. If normalizer returns {:unknown, _}, also
   # return raw — the caller gets the value and the unknown is visible via audit.
-  defp apply_norm(raw, nil), do: raw
+  # Strip surrounding double-quotes emitted by some hubs (e.g. MethBase).
+  defp apply_norm(raw, nil), do: strip_quotes(raw)
 
   defp apply_norm(raw, norm_fn) do
-    case norm_fn.(raw) do
+    case norm_fn.(strip_quotes(raw)) do
       {:ok, canonical} -> canonical
-      {:unknown, _} -> raw
+      {:unknown, _} -> strip_quotes(raw)
     end
+  end
+
+  defp strip_quotes(val) do
+    val
+    |> String.trim_leading("\"")
+    |> String.trim_trailing("\"")
   end
 end
