@@ -98,6 +98,7 @@ defmodule Gin.Meta.GinMeta.Experiment do
     :id,
     :accession,
     :type,
+    :sub_type,
     :target,
     :molecule,
     :epirr_id
@@ -107,6 +108,7 @@ defmodule Gin.Meta.GinMeta.Experiment do
           id: String.t() | nil,
           accession: String.t() | nil,
           type: String.t() | nil,
+          sub_type: String.t() | nil,
           target: String.t() | nil,
           molecule: String.t() | nil,
           epirr_id: String.t() | nil

@@ -34,6 +34,7 @@ defmodule Mix.Tasks.Gin.Audit do
   # Path uses get_in/2 keys — atoms for structs navigated via Map.get on struct maps.
   @audited_fields [
     {"experiment.type", [:experiment, :type], Vocab.ExperimentType},
+    {"experiment.sub_type", [:experiment, :sub_type], nil},
     {"experiment.target", [:experiment, :target], nil},
     {"experiment.molecule", [:experiment, :molecule], Vocab.Molecule},
     {"sample.biomaterial_type", [:sample, :biomaterial_type], Vocab.BiomaterialType},

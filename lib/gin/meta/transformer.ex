@@ -60,6 +60,7 @@ defmodule Gin.Meta.Transformer do
         id: :experiment_id,
         accession: :accession,
         type: :experiment_type,
+        sub_type: :experiment_sub_type,
         target: :experiment_target,
         molecule: :molecule,
         epirr_id: :epirr_id

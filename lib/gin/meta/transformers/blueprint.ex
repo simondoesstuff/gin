@@ -208,8 +208,10 @@ defmodule Gin.Meta.Transformers.Blueprint do
       {:analysis_type, @analysis_type_sg_keys, nil},
       {:sample_barcode, @sample_barcode_sg_keys, nil},
       {:experiment_type, @experiment_sg_keys, &lift_experiment_type/1},
-      # view is a last-resort source for experiment type (e.g. MethBase v1hmr–v5coverage)
+      # view is a last-resort source for experiment type (e.g. MethBase d/v codes)
       {:experiment_type, ~w[view], &lift_view_experiment_type/1},
+      # sub_type preserves the specific view code when it collapses to a canonical type
+      {:experiment_sub_type, ~w[view], &lift_view_sub_type/1},
       {:experiment_target, @target_sg_keys, nil}
     ]
 
@@ -277,6 +279,10 @@ defmodule Gin.Meta.Transformers.Blueprint do
       nil -> :skip
       canonical -> {:ok, canonical}
     end
+  end
+
+  defp lift_view_sub_type(raw) do
+    if Map.has_key?(@view_experiment_types, raw), do: {:ok, raw}, else: :skip
   end
 
   defp sample_code?(val), do: String.match?(val, ~r/^\d+$/)
