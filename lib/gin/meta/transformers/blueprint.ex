@@ -80,10 +80,19 @@ defmodule Gin.Meta.Transformers.Blueprint do
   # Always consume them to keep `other` clean, but don't override metadata values.
   @redundant_sg_keys ~w[
     sample_description sample_description_3 sample_description_2
-    experiment view data_type
+    experiment data_type
     Comparison NeuN Smooth
     sample_id source track_type
   ]
+
+  # MethBase view codes — all are WGBS-derived bisulfite tracks
+  @view_experiment_types %{
+    "v1hmr" => "DNA_Methylation",
+    "v2amr" => "DNA_Methylation",
+    "v3pmd" => "DNA_Methylation",
+    "v4sym" => "DNA_Methylation",
+    "v5coverage" => "DNA_Methylation"
+  }
 
   def transform(raw) do
     {attrs, consumed} = {%{}, MapSet.new()}
@@ -176,6 +185,8 @@ defmodule Gin.Meta.Transformers.Blueprint do
       {:analysis_type, @analysis_type_sg_keys, nil},
       {:sample_barcode, @sample_barcode_sg_keys, nil},
       {:experiment_type, @experiment_sg_keys, &lift_experiment_type/1},
+      # view is a last-resort source for experiment type (e.g. MethBase v1hmr–v5coverage)
+      {:experiment_type, ~w[view], &lift_view_experiment_type/1},
       {:experiment_target, @target_sg_keys, nil}
     ]
 
@@ -191,7 +202,10 @@ defmodule Gin.Meta.Transformers.Blueprint do
             if Map.has_key?(a, field) do
               {a, c}
             else
-              {Map.put(a, field, apply_norm(raw_val, norm_fn)), c}
+              case apply_norm(raw_val, norm_fn) do
+                nil -> {a, c}
+                val -> {Map.put(a, field, val), c}
+              end
             end
         end
       end)
@@ -218,20 +232,25 @@ defmodule Gin.Meta.Transformers.Blueprint do
     end)
   end
 
-  # Experiment type normalizer that handles three cases:
-  #   1. Direct vocab match → canonical
-  #   2. ENCODE structured format (e.g. "TF_ChIP_seq_CTCF") → canonical (target handled separately via subGroups.target)
-  #   3. Opaque sample code (all digits) → treat as unknown so it doesn't pollute the field
+  # Experiment type normalizer:
+  #   1. Opaque numeric sample code (Roadmap/MethBase index) → :skip so view fallback can fire
+  #   2. Direct vocab match → canonical
+  #   3. ENCODE structured format (e.g. "TF_ChIP_seq_CTCF") → canonical
   defp lift_experiment_type(raw) do
     cond do
-      sample_code?(raw) ->
-        {:unknown, raw}
-
+      sample_code?(raw) -> :skip
       true ->
         case Vocab.ExperimentType.normalize(raw) do
           {:ok, _} = ok -> ok
           {:unknown, _} -> try_structured(raw)
         end
+    end
+  end
+
+  defp lift_view_experiment_type(raw) do
+    case Map.get(@view_experiment_types, raw) do
+      nil -> {:unknown, raw}
+      canonical -> {:ok, canonical}
     end
   end
 
@@ -244,15 +263,16 @@ defmodule Gin.Meta.Transformers.Blueprint do
     end
   end
 
-  # If no normalizer, return raw. If normalizer returns {:unknown, _}, also
-  # return raw — the caller gets the value and the unknown is visible via audit.
-  # Strip surrounding double-quotes emitted by some hubs (e.g. MethBase).
+  # Normalise a raw value via norm_fn.
+  # Returns nil when norm_fn signals :skip — caller should not store the field.
+  # Strips surrounding double-quotes emitted by some hubs (e.g. MethBase).
   defp apply_norm(raw, nil), do: strip_quotes(raw)
 
   defp apply_norm(raw, norm_fn) do
     case norm_fn.(strip_quotes(raw)) do
       {:ok, canonical} -> canonical
       {:unknown, _} -> strip_quotes(raw)
+      :skip -> nil
     end
   end
 
