@@ -52,8 +52,7 @@ defmodule Mix.Tasks.Gin.Audit do
 
   @impl Mix.Task
   def run(args) do
-    Application.ensure_all_started(:inets)
-    Application.ensure_all_started(:ssl)
+    Application.ensure_all_started(:req)
 
     hubs = if args == [], do: @default_hubs, else: args
 

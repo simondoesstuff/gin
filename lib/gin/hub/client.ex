@@ -91,30 +91,9 @@ defmodule Gin.Hub.Client do
   end
 
   defp get(url) do
-    uri = URI.parse(url)
-    url_charlist = String.to_charlist(url)
-
-    ssl_opts =
-      if uri.scheme == "https" do
-        [
-          ssl: [
-            verify: :verify_peer,
-            cacerts: :public_key.cacerts_get(),
-            server_name_indication: String.to_charlist(uri.host),
-            depth: 5,
-            versions: [:"tlsv1.3", :"tlsv1.2"],
-            customize_hostname_check: [
-              match_fun: :public_key.pkix_verify_hostname_match_fun(:https)
-            ]
-          ]
-        ]
-      else
-        []
-      end
-
-    case :httpc.request(:get, {url_charlist, []}, ssl_opts, body_format: :binary) do
-      {:ok, {{_, 200, _}, _headers, body}} -> {:ok, body}
-      {:ok, {{_, status, _}, _, _}} -> {:error, {:http_status, status, url}}
+    case Req.get(url) do
+      {:ok, %{status: 200, body: body}} -> {:ok, body}
+      {:ok, %{status: status}} -> {:error, {:http_status, status, url}}
       {:error, reason} -> {:error, {reason, url}}
     end
   end
