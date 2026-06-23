@@ -50,6 +50,14 @@ defmodule Gin.Meta.Transformers.Blueprint do
     {"disease", :disease, nil},
     {"epirr_id", :epirr_id, nil},
 
+    # VISION/PSU-specific metadata fields
+    {"lab", :analysis_group, nil},
+    {"id", :internal_id, nil},
+    {"run", :run_id, nil},
+    {"aka", :aka, nil},
+    {"cluster", :cluster, nil},
+    {"workflow", :workflow, nil},
+
     # CEMT/IHEC fields — consumed to keep `other` clean, not assembled into GinMeta
     {"reference_registry_id", :epirr_id, nil},
     {"biomaterial_provider", :biomaterial_provider, nil},
@@ -68,13 +76,15 @@ defmodule Gin.Meta.Transformers.Blueprint do
   ]
 
   # Candidate subGroup keys for each biological dimension, in priority order
-  @cell_type_sg_keys ~w[sample_description cell_type cellType biosample]
+  @cell_type_sg_keys ~w[sample_description cell_type cellType cell sample biosample]
   @tissue_sg_keys ~w[sample_source tissue Tissue TISSUE_TYPE]
-  @experiment_sg_keys ~w[experiment assay]
+  # mark (VISION/IDEAS) before experiment — histone marks and ATAC are primary assay type signals
+  @experiment_sg_keys ~w[mark experiment assay]
   @analysis_group_sg_keys ~w[analysis_group analysisGroup lab]
   @analysis_type_sg_keys ~w[analysis_type analysisType]
   @sample_barcode_sg_keys ~w[sample_barcode sampleBarcode barcode]
-  @target_sg_keys ~w[target]
+  # factor (VISION TF ChIP-seq) and ab (antibody) encode the experiment target
+  @target_sg_keys ~w[target factor ab]
 
   # Recognized subGroups keys that duplicate fields we get from metadata.
   # Always consume them to keep `other` clean, but don't override metadata values.
@@ -83,15 +93,28 @@ defmodule Gin.Meta.Transformers.Blueprint do
     experiment data_type
     Comparison NeuN Smooth
     sample_id source track_type
+    rep mat deg phz src readType
+    project
   ]
 
-  # MethBase view codes — all are WGBS-derived bisulfite tracks
+  # MethBase view codes — all are WGBS-derived bisulfite tracks.
+  # Smith Lab MethBase uses v-prefix codes; UCSC-hosted MethBase uses d-prefix codes.
+  # Both encode DNA methylation analyses; coverage tracks are also included.
   @view_experiment_types %{
     "v1hmr" => "DNA_Methylation",
     "v2amr" => "DNA_Methylation",
     "v3pmd" => "DNA_Methylation",
     "v4sym" => "DNA_Methylation",
-    "v5coverage" => "DNA_Methylation"
+    "v5coverage" => "DNA_Methylation",
+    "d1PMD" => "DNA_Methylation",
+    "d2HMR" => "DNA_Methylation",
+    "d3Meth" => "DNA_Methylation",
+    "d4Read" => "DNA_Methylation",
+    "d5Allelic" => "DNA_Methylation",
+    "d6AMR" => "DNA_Methylation",
+    "d7HyperMR" => "DNA_Methylation",
+    "d8HydroxyMeth" => "DNA_Methylation",
+    "d9MethPost" => "DNA_Methylation"
   }
 
   def transform(raw) do
@@ -249,7 +272,9 @@ defmodule Gin.Meta.Transformers.Blueprint do
 
   defp lift_view_experiment_type(raw) do
     case Map.get(@view_experiment_types, raw) do
-      nil -> {:unknown, raw}
+      # Only known view→assay mappings are stored; unrecognized view codes are skipped
+      # so they don't pollute experiment_type with display/pipeline identifiers.
+      nil -> :skip
       canonical -> {:ok, canonical}
     end
   end

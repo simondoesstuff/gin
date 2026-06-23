@@ -35,8 +35,40 @@ defmodule Gin.Hub.Client do
 
   @doc "Fetch and parse trackDb.txt for one assembly, returning resolved leaf tracks."
   def fetch_tracks(trackdb_url) do
-    with {:ok, text} <- get(trackdb_url) do
+    with {:ok, text} <- fetch_with_includes(trackdb_url) do
       {:ok, TrackDb.parse_and_resolve(text)}
+    end
+  end
+
+  # Fetch a trackDb file and recursively inline any `include` directives.
+  defp fetch_with_includes(url, depth \\ 0)
+  defp fetch_with_includes(_url, depth) when depth >= 8, do: {:error, :include_depth_exceeded}
+
+  defp fetch_with_includes(url, depth) do
+    with {:ok, text} <- get(url) do
+      base = base_url(url)
+
+      expanded =
+        text
+        |> String.split("\n")
+        |> Enum.flat_map(fn line ->
+          trimmed = String.trim(line)
+
+          if String.starts_with?(trimmed, "include ") do
+            path = String.slice(trimmed, 8..-1//1) |> String.trim()
+            included_url = "#{base}/#{path}"
+
+            case fetch_with_includes(included_url, depth + 1) do
+              {:ok, included_text} -> String.split(included_text, "\n")
+              {:error, _} -> []
+            end
+          else
+            [line]
+          end
+        end)
+        |> Enum.join("\n")
+
+      {:ok, expanded}
     end
   end
 
@@ -69,6 +101,8 @@ defmodule Gin.Hub.Client do
             verify: :verify_peer,
             cacerts: :public_key.cacerts_get(),
             server_name_indication: String.to_charlist(uri.host),
+            depth: 5,
+            versions: [:"tlsv1.3", :"tlsv1.2"],
             customize_hostname_check: [
               match_fun: :public_key.pkix_verify_hostname_match_fun(:https)
             ]

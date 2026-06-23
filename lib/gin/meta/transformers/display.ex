@@ -19,6 +19,16 @@ defmodule Gin.Meta.Transformers.Display do
     centerLabelsDense darkerLabels height hoverMetadata
     viewLimits viewUi colorByStrand
     configurable
+    group noInherit visibilityViewDefaults subTrack
+    minGrayLevel useScore maxLimit noScoreFilter
+    pValueFilter pValueFilterLimits
+    qValueFilter qValueFilterLimits
+    signalFilter signalFilterLimits
+    filter.nbp filterLimits filterText.name filterLabel.name
+    fileSortOrder maxItems psuTrack itrack
+    defaultLabelFields labelFields
+    barChartColors barChartMetric barChartUnit barChartLabel barChartBars
+    table
   ]
 
   def transform(raw) do
