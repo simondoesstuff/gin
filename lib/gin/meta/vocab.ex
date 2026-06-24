@@ -22,6 +22,11 @@ defmodule Gin.Meta.Vocab do
   matched case-insensitively AND by slug). For large open-ended vocabs like
   cell type and tissue, slug matching covers common separator/case variants
   without requiring exhaustive alias lists.
+
+  The `:obo` option takes a path relative to `priv/` pointing to an OBO 1.2
+  ontology file. All `[Term]` entries with `id: CL:` are parsed and merged
+  with the eterm entries. eterm entries take priority for slug conflicts —
+  manual curation always wins over ontology defaults.
   """
 
   @doc "Return `{:ok, canonical}` or `{:unknown, raw}` for the given raw string."
@@ -40,21 +45,46 @@ defmodule Gin.Meta.Vocab do
   defmacro __using__(opts) do
     priv_dir = @priv_dir
 
-    {entries, eterm_path, use_slug} =
-      cond do
-        eterm = Keyword.get(opts, :eterm) ->
-          path = Path.join(priv_dir, eterm)
-          terms = Gin.Meta.Vocab.load_eterm!(path)
-          {terms, path, true}
-
-        true ->
-          {Keyword.fetch!(opts, :entries), nil, false}
+    {eterm_entries, eterm_path} =
+      if eterm = Keyword.get(opts, :eterm) do
+        path = Path.join(priv_dir, eterm)
+        {Gin.Meta.Vocab.load_eterm!(path), path}
+      else
+        {nil, nil}
       end
 
-    quote bind_quoted: [entries: entries, eterm_path: eterm_path, use_slug: use_slug] do
+    {obo_entries, obo_path} =
+      if obo = Keyword.get(opts, :obo) do
+        path = Path.join(priv_dir, obo)
+        {Gin.Ontology.Obo.parse_terms(path), path}
+      else
+        {[], nil}
+      end
+
+    # eterm entries take priority: their slugs are inserted first (Map.put_new),
+    # so OBO entries only fill in gaps not covered by manual curation.
+    {entries, use_slug} =
+      cond do
+        eterm_entries ->
+          {eterm_entries ++ obo_entries, true}
+
+        obo_entries != [] ->
+          {obo_entries, true}
+
+        true ->
+          {Keyword.fetch!(opts, :entries), false}
+      end
+
+    quote bind_quoted: [
+            entries: entries,
+            eterm_path: eterm_path,
+            obo_path: obo_path,
+            use_slug: use_slug
+          ] do
       @behaviour Gin.Meta.Vocab
 
       if eterm_path, do: @external_resource(eterm_path)
+      if obo_path, do: @external_resource(obo_path)
 
       @lookup Gin.Meta.Vocab.build_lookup(entries)
       @members Enum.map(entries, &elem(&1, 0))
@@ -114,7 +144,7 @@ defmodule Gin.Meta.Vocab do
   def build_lookup(entries) do
     Enum.reduce(entries, %{}, fn {canonical, aliases}, acc ->
       Enum.reduce([canonical | aliases], acc, fn a, m ->
-        Map.put(m, String.downcase(a), canonical)
+        Map.put_new(m, String.downcase(a), canonical)
       end)
     end)
   end

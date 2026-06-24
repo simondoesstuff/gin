@@ -164,5 +164,13 @@
   {"Karpas-422", ["karpas422", "karpas-422"]},
   {"OCI-LY3", ["ocily3"]},
   {"OCI-LY7", ["ocily7"]},
-  {"Pfeiffer", ["pfeiffer"]}
+  {"Pfeiffer", ["pfeiffer"]},
+
+  %% ---- Blueprint-specific subtypes not covered by CL ----
+  %% Slug matching connects Blueprint's underscore form to these canonical names.
+  "endothelial cell of umbilical vein (proliferating)",
+  "endothelial cell of umbilical vein (resting)",
+  "CD3-positive, CD4-positive, CD8-positive, double-positive thymocyte",
+  "CD3-negative, CD4-positive, CD8-positive, double-positive thymocyte",
+  "precursor lymphocyte of B lineage"
 ].

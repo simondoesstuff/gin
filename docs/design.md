@@ -116,18 +116,25 @@ Blueprint also handles:
 
 **Controlled Vocabularies**
 
-Vocab modules implement a compile-time whitelist of `{canonical, [aliases…]}` pairs. `normalize/1` maps raw strings case-insensitively through the alias table, returning `{:ok, canonical}` or `{:unknown, raw}`. Unknown values are stored as-is — they are not rejected — but surface in `mix gin.audit` output so the whitelist can be extended.
+Vocab modules implement a compile-time whitelist of `{canonical, [aliases…]}` pairs. `normalize/1` maps raw strings through the alias table, returning `{:ok, canonical}` or `{:unknown, raw}`. Unknown values are stored as-is — they are not rejected — but surface in `mix gin.audit` output so the whitelist can be extended.
+
+The `Vocab` macro supports three entry sources, combinable:
+
+- `:entries` — inline `{canonical, [aliases…]}` list. Matching is case-insensitive exact. Used for small closed vocabs (Sex, Molecule, BiomaterialType).
+- `:eterm` — path to a `priv/vocab/*.eterm` file (Erlang term format). Entries are either plain strings (canonical only) or `{canonical, [aliases…]}` tuples. Plain-string entries are matched by **slug** — lowercase with non-alphanumeric runs collapsed to `_` — so separator and case variants resolve automatically without explicit alias lists.
+- `:obo` — path to a `priv/ontology/*.obo` file (OBO 1.2 format). All non-obsolete `CL:`-prefixed terms are loaded as `{name, [exact_synonyms, narrow_synonyms]}` pairs and merged after the eterm entries. eterm always wins on slug collision, so manual curation overrides ontology defaults.
 
 Current vocabs:
 
-| Module            | Closed?   | Description                                                                                                                                                                                       |
-| ----------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ExperimentType`  | semi-open | Assay types: ChIP-seq marks, methylation, RNA-seq, ATAC-seq, DNase-seq, Repli-seq. Also implements `parse_structured/1` for ENCODE compound names like `"TF_ChIP_seq_CTCF"` → `{ChIP-seq, CTCF}`. |
-| `Molecule`        | closed    | `genomic_DNA`, `polyA_RNA`, `total_RNA`                                                                                                                                                           |
-| `BiomaterialType` | closed    | `Primary_Cell`, `Primary_Cell_Culture`, `Primary_Tissue`, `Cell_Line`                                                                                                                             |
-| `Sex`             | closed    | `Female`, `Male`, `Mixed`, `Unknown`                                                                                                                                                              |
-| `Tissue`          | semi-open | Anatomical sources from Blueprint and brain region codes from BrainEpigenome (e.g. `A_BA9` → `frontal_cortex`)                                                                                    |
-| `TrackType`       | closed    | `bigBed`, `bigWig`, `bigGenePred`, `bigNarrowPeak`, …                                                                                                                                             |
+| Module            | Closed?   | Source           | Description                                                                                                                                                                                       |
+| ----------------- | --------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ExperimentType`  | semi-open | `:entries`       | Assay types: ChIP-seq marks, methylation, RNA-seq, ATAC-seq, DNase-seq, Repli-seq. Also implements `parse_structured/1` for ENCODE compound names like `"TF_ChIP_seq_CTCF"` → `{ChIP-seq, CTCF}`. |
+| `Molecule`        | closed    | `:entries`       | `genomic_DNA`, `polyA_RNA`, `total_RNA`                                                                                                                                                           |
+| `BiomaterialType` | closed    | `:entries`       | `Primary_Cell`, `Primary_Cell_Culture`, `Primary_Tissue`, `Cell_Line`                                                                                                                             |
+| `Sex`             | closed    | `:entries`       | `Female`, `Male`, `Mixed`, `Unknown`                                                                                                                                                              |
+| `Tissue`          | semi-open | `:eterm`         | Anatomical sources. Slug matching covers case/separator variants; explicit aliases bridge abbreviation codes (e.g. `A_BA9` → `frontal_cortex`) and Roadmap uppercase anatomy codes.               |
+| `CellType`        | semi-open | `:eterm` + `:obo`| Cell types from manual curation (`priv/vocab/cell_type.eterm`) merged with all Cell Ontology terms (`priv/ontology/cl.obo`). Slug matching connects Blueprint's `name_with_underscores` style to CL canonical names. Unknown values (e.g. disease-sample identifiers like `Chronic_Lymphocytic_Leukemia`) are stored as raw strings. |
+| `TrackType`       | closed    | `:entries`       | `bigBed`, `bigWig`, `bigGenePred`, `bigNarrowPeak`, …                                                                                                                                             |
 
 **Audit**
 
