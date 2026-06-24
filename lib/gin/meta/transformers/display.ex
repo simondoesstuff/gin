@@ -33,6 +33,7 @@ defmodule Gin.Meta.Transformers.Display do
     aggregate container
     thickDrawItem exonArrows exonArrowsDense
     searchIndex searchTrix showTopScorers
+    scoreFilter sepFields spectrum
   ]
 
   def transform(raw) do

@@ -78,7 +78,10 @@ defmodule Gin.Meta.Vocab.ExperimentType do
 
       # ChIP-seq generic
       {"ChIP-seq", ~w[chipseq chip_seq chip]},
-      {"Input", ~w[input input_control ctrl control]}
+      {"Input", ~w[input input_control ctrl control]},
+
+      # ENCODE integrated annotations
+      {"cCRE", ~w[cCREs ccre ccres]}
     ]
 
   # Assay token sequences to recognise in compound names, longest first to
