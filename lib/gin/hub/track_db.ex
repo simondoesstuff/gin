@@ -1,12 +1,25 @@
 defmodule Gin.Hub.TrackDb do
   alias Gin.Hub.Parser
 
+  # Track types that represent 1D genomic intervals. bigWig (signal/coverage),
+  # bigInteract (2D arcs), hic, bam/cram, and unknown types are excluded.
+  @interval_types ~w[
+    bigBed bed
+    bigNarrowPeak narrowPeak
+    bigBroadPeak broadPeak
+    bigGenePred genePred
+    bigPsl psl
+    bigBarChart
+    vcfTabix
+  ]
+
   @doc """
   Parse trackDb text and return a list of resolved leaf track maps.
 
   Leaf tracks (those with `bigDataUrl`) have parent field values merged in,
   with the child's own fields taking precedence. Nested fields (`metadata`,
   `subGroups`) are parsed from KEY=VALUE inline strings into maps.
+  Only tracks with a 1D interval type are returned.
   """
   def parse_and_resolve(text) do
     raw = Parser.parse_track_db(text)
@@ -20,6 +33,14 @@ defmodule Gin.Hub.TrackDb do
       |> resolve_inheritance(by_name, _visited = MapSet.new())
       |> normalize_fields()
     end)
+    |> Enum.filter(&interval_type?/1)
+  end
+
+  defp interval_type?(track) do
+    case Map.get(track, "type") do
+      nil -> false
+      type_str -> (type_str |> String.split() |> List.first("")) in @interval_types
+    end
   end
 
   defp resolve_inheritance(track, by_name, visited) do
