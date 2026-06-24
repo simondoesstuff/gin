@@ -53,6 +53,21 @@ defmodule Gin.Meta.Transformers.Blueprint do
     # FANTOM5 metadata fields
     {"ontology_id", :sample_id, nil},
 
+    # Roadmap Epigenomics quoted metadata fields (key names after quote-stripping)
+    {"Standardized_Epigenome_name", :cell_type, nil},
+    {"Age", :donor_age, nil},
+    {"Sex", :donor_sex, &Vocab.Sex.normalize/1},
+    {"Anatomy", :tissue, nil},
+    {"EID", :sample_id, nil},
+    {"Ethnicity", :donor_ethnicity, nil},
+    {"Lab", :analysis_group, nil},
+    # "Type" is handled as a special case below — value determines semantics
+
+    # Roadmap CompRoadmap unquoted metadata fields
+    {"Sample", :cell_type, nil},
+    {"Assay", :experiment_type, &Vocab.ExperimentType.normalize/1},
+    {"OutputType", :analysis_type, nil},
+
     # VISION/PSU-specific metadata fields
     {"lab", :analysis_group, nil},
     {"id", :internal_id, nil},
@@ -89,6 +104,14 @@ defmodule Gin.Meta.Transformers.Blueprint do
   # factor (VISION TF ChIP-seq) and ab (antibody) encode the experiment target
   @target_sg_keys ~w[target factor ab]
 
+  # Roadmap Epigenomics metadata keys that are consumed without storing.
+  # These are either display/ordering fields or redundant identifiers.
+  @redundant_metadata_keys ~w[
+    genome
+    Epigenome_Mnemonic EDACC_Epigenome_name
+    Group Order style
+  ]
+
   # Recognized subGroups keys that duplicate fields we get from metadata.
   # Always consume them to keep `other` clean, but don't override metadata values.
   @redundant_sg_keys ~w[
@@ -100,12 +123,17 @@ defmodule Gin.Meta.Transformers.Blueprint do
     project
     category strand sequenceTech group
     type
+    sampleType assayType outputType dataType
   ]
 
   # MethBase view codes — all are WGBS-derived bisulfite tracks.
   # Smith Lab MethBase uses v-prefix codes; UCSC-hosted MethBase uses d-prefix codes.
   # Both encode DNA methylation analyses; coverage tracks are also included.
   @view_experiment_types %{
+    # Roadmap chromHMM segmentation views
+    "AuxiliaryHMM" => "Chromatin_Segmentation",
+    "PrimaryHMM" => "Chromatin_Segmentation",
+    "ImputedHMM" => "Chromatin_Segmentation",
     "v1hmr" => "DNA_Methylation",
     "v2amr" => "DNA_Methylation",
     "v3pmd" => "DNA_Methylation",
@@ -165,6 +193,31 @@ defmodule Gin.Meta.Transformers.Blueprint do
           {a, MapSet.put(consumed, "metadata.sequence_tech")}
       end
 
+    # "Type" is overloaded across Roadmap hub types:
+    #   chromHMM quoted metadata: "Type"="PrimaryTissue" → biomaterial_type
+    #   CompRoadmap unquoted metadata: Type=peaks → output type, ignore
+    # Only store biomaterial_type when the value is a known term.
+    {attrs, consumed} =
+      case Map.get(meta, "Type") do
+        nil ->
+          {attrs, consumed}
+
+        raw ->
+          consumed = MapSet.put(consumed, "metadata.Type")
+
+          a =
+            if Map.has_key?(attrs, :biomaterial_type) do
+              attrs
+            else
+              case Vocab.BiomaterialType.normalize(raw) do
+                {:ok, canonical} -> Map.put(attrs, :biomaterial_type, canonical)
+                {:unknown, _} -> attrs
+              end
+            end
+
+          {a, consumed}
+      end
+
     # SAMPLE_ONTOLOGY_URI — semicolon-separated list of URIs
     {attrs, consumed} =
       case Map.get(meta, "SAMPLE_ONTOLOGY_URI") do
@@ -213,6 +266,12 @@ defmodule Gin.Meta.Transformers.Blueprint do
           a = if Map.has_key?(attrs, :disease_ontology_uri), do: attrs, else: Map.put(attrs, :disease_ontology_uri, uris)
           {a, MapSet.put(consumed, "metadata.disease_ontology_uri")}
       end
+
+    # Consume known metadata keys that have no biological meaning for gin
+    consumed =
+      Enum.reduce(@redundant_metadata_keys, consumed, fn k, c ->
+        if Map.has_key?(meta, k), do: MapSet.put(c, "metadata.#{k}"), else: c
+      end)
 
     {attrs, consumed}
   end

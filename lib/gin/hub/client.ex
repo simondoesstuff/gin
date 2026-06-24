@@ -91,10 +91,20 @@ defmodule Gin.Hub.Client do
   end
 
   defp get(url) do
-    case Req.get(url) do
+    # retry: false so we fall through to curl immediately on transport errors
+    # rather than waiting through 3 retries (common for TLS-filtered hosts)
+    case Req.get(url, retry: false) do
       {:ok, %{status: 200, body: body}} -> {:ok, body}
       {:ok, %{status: status}} -> {:error, {:http_status, status, url}}
+      {:error, %Req.TransportError{}} -> get_via_curl(url)
       {:error, reason} -> {:error, {reason, url}}
+    end
+  end
+
+  defp get_via_curl(url) do
+    case System.cmd("curl", ["-s", "--fail", "-L", url], stderr_to_stdout: false) do
+      {body, 0} -> {:ok, body}
+      {_, code} -> {:error, {:curl_exit, code, url}}
     end
   end
 

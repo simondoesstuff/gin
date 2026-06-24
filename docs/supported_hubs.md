@@ -25,8 +25,9 @@ gin engine to index.
 | ENCODE Integrative | https://storage.googleapis.com/gcp.wenglab.org/hubs/integrative52/hub.txt                  |           1,998 | hg38, mm10 | ENCODE cCRE registry. Rich cell-type data (483 unique values). Adds `cCRE` experiment type. |
 | DASHR v2        | https://dashr2.lisanwanglab.org/tracks/DASHR2_hub.txt                                          |           1,268 | hg19, hg38 | Human small ncRNA atlas. `subGroups.tissue` contains compound sample IDs (e.g. `osteoblast-rep1_ENCSR000CUW`), not vocab terms. |
 | IDEAS Roadmap   | http://bx.psu.edu/~yuzhang/Roadmap_ideas/ideas_hub.txt                                         |             127 | hg19       | Roadmap 20-state IDEAS chromatin segmentation. No biological metadata; `subGroups.type` holds broad tissue category codes — deferred until Roadmap Epigenomics support is added. |
+| Roadmap Epigenomics | https://vizhub.wustl.edu/VizHub/RoadmapReleaseAll.txt                                       |          26,429 | hg19, hg38 | Two parallel composite organizations (by-sample, by-assay) cause moderate track duplication. Quoted `"Key"="Value"` metadata for chromHMM tracks; unquoted for ENCODE peak/signal tracks. Adds `Chromatin_Segmentation` experiment type and curl TLS fallback for Erlang-filtered hosts. |
 
-**Total reviewed: 81,608 interval tracks across 13 hubs (CEMT currently 404).**
+**Total reviewed: 108,037 interval tracks across 14 hubs (CEMT currently 404).**
 
 ---
 
@@ -37,7 +38,7 @@ Hubs we intend to add. Priority order is rough; each should be reviewed with `mi
 | Hub                  | URL                                                                       | Notes                                                                                                                                                                              |
 | -------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | GTEx RNA-seq         | http://hgdownload.soe.ucsc.edu/hubs/gtex/hub.txt                          | 7,572-sample RNA-seq signal hub. Currently 403 Forbidden from UCSC for programmatic access; likely all bigWig so low value after filtering.                                         |
-| Roadmap Epigenomics  | https://vizhub.wustl.edu/VizHub/RoadmapReleaseAll.txt                     | 273 tracks in hg19. Blocked: vizhub.wustl.edu closes TLS mid-handshake for Erlang clients. Metadata keys: `Anatomy`, `Type`, `EID`, `Ethnicity`, `Lab`. Worth fixing or mirroring. |
+| Roadmap Epigenomics  | https://vizhub.wustl.edu/VizHub/RoadmapReleaseAll.txt                     | ~~Blocked by TLS~~ — resolved via curl fallback. Now reviewed (see table above). |
 | ReMap 2022           | https://remap.univ-amu.fr/storage/public/hubReMap2022/hub.txt             | Single bigBed annotation track, not per-sample. No biological metadata to extract. Skip.                                                                                           |
 
 ---
@@ -46,5 +47,5 @@ Hubs we intend to add. Priority order is rough; each should be reviewed with `mi
 
 - **`include` directives**: Gin resolves these recursively (depth limit 8). Required for VISION and likely other large hubs.
 - **Track type filtering**: Only 1D interval types are kept (`bigBed`, `bigNarrowPeak`, `bigBroadPeak`, `bigGenePred`, `bigPsl`, `bigBarChart`, `vcfTabix`, and plain `bed`/`narrowPeak`/`broadPeak`/`genePred`/`psl`). `bigWig`, `bigInteract`, `hic`, `bam`, and unknown types are dropped at parse time.
-- **TLS**: vizhub.wustl.edu closes the connection mid-handshake (likely JA3 fingerprint filtering); curl works fine but Erlang's HTTP client cannot reach it.
-- **Metadata conventions**: Blueprint/IHEC members use uppercase `metadata KEY=VALUE`. CEMT uses the same keys lowercase. ENCODE DNA/RNA use a different key schema but same inline format. VISION uses only `subGroups`. FANTOM5 uses lowercase `metadata` with `ontology_id` and `sequence_tech` keys.
+- **TLS fallback**: When Erlang's HTTP client gets a transport error (`:closed`, likely JA3 fingerprint filtering), gin automatically retries the request via `System.cmd("curl", ...)`. This resolves vizhub.wustl.edu and any similar hosts.
+- **Metadata conventions**: Blueprint/IHEC members use uppercase `metadata KEY=VALUE`. CEMT uses the same keys lowercase. ENCODE DNA/RNA use a different key schema but same inline format. VISION uses only `subGroups`. FANTOM5 uses lowercase `metadata` with `ontology_id` and `sequence_tech` keys. Roadmap Epigenomics uses two formats: quoted `"Key"="Value with spaces"` for chromHMM tracks and unquoted `Key=Value` for ENCODE peak/signal tracks.

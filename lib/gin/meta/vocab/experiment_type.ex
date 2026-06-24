@@ -60,8 +60,13 @@ defmodule Gin.Meta.Vocab.ExperimentType do
       {"H2AK5ac", ~w[h2ak5ac]},
       {"H2AK9ac", ~w[h2ak9ac]},
 
+      # Chromatin state segmentation (chromHMM, IDEAS, etc.)
+      {"Chromatin_Segmentation",
+       ~w[chromhmm chromatin_state chromatin_segmentation hmm_segmentation auxiliaryhmm primaryhmm imputedhmm]},
+
       # RNA-seq
-      {"mRNA-Seq", ~w[mrna-seq mrna_seq mRNA-seq mRNA mrna PolyA_RNA polya-rnaseq]},
+      {"mRNA-Seq",
+       ~w[mrna-seq mrna_seq mRNA-seq mRNA mrna PolyA_RNA polya-rnaseq polya_plus_rna-seq polya_plus_rnaseq]},
       {"total-RNA-Seq", ~w[total-rna-seq total_rna_seq totalrnaseq total-rnaseq]},
       {"flRNA-seq", ~w[flrna-seq flrna_seq full_length_rna_seq]},
       {"smRNA-seq", ~w[smrna-seq smrna smRNA mirna-seq mirnaseq smallRNA]},

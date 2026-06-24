@@ -35,6 +35,7 @@ defmodule Gin.Meta.Transformers.Display do
     searchIndex searchTrix showTopScorers
     scoreFilter sepFields spectrum
     bedNameLabel
+    dividers
   ]
 
   def transform(raw) do

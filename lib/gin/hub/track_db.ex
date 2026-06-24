@@ -85,13 +85,68 @@ defmodule Gin.Hub.TrackDb do
   end
 
   defp parse_kv_string(raw) do
-    raw
-    |> String.split(~r/\s+/)
-    |> Enum.reduce(%{}, fn pair, acc ->
-      case String.split(pair, "=", parts: 2) do
-        [k, v] when k != "" -> Map.put(acc, k, v)
-        _ -> acc
-      end
-    end)
+    if String.trim_leading(raw) |> String.starts_with?("\"") do
+      parse_quoted_pairs(raw, %{})
+    else
+      raw
+      |> String.split(~r/\s+/)
+      |> Enum.reduce(%{}, fn pair, acc ->
+        case String.split(pair, "=", parts: 2) do
+          [k, v] when k != "" -> Map.put(acc, k, v)
+          _ -> acc
+        end
+      end)
+    end
   end
+
+  # Parse "Key"="Value with possible spaces" pairs.
+  # Handles embedded quotes in values (e.g. Group field with HTML spans).
+  defp parse_quoted_pairs("", acc), do: acc
+
+  defp parse_quoted_pairs(str, acc) do
+    case String.trim_leading(str) do
+      "\"" <> rest ->
+        {key, after_key} = scan_until_quote(rest)
+
+        case after_key do
+          "=\"" <> after_eq ->
+            {value, rest2} = scan_quoted_value(after_eq)
+            parse_quoted_pairs(rest2, Map.put(acc, key, value))
+
+          "=" <> after_eq ->
+            [value | tail] = String.split(after_eq, ~r/\s+/, parts: 2)
+            parse_quoted_pairs(List.first(tail, ""), Map.put(acc, key, value))
+
+          _ ->
+            acc
+        end
+
+      _ ->
+        acc
+    end
+  end
+
+  # Scan up to the next closing quote — used for keys (no embedded quotes expected).
+  defp scan_until_quote(str, acc \\ "")
+  defp scan_until_quote("", acc), do: {acc, ""}
+  defp scan_until_quote("\"" <> rest, acc), do: {acc, rest}
+  defp scan_until_quote(<<c::utf8, rest::binary>>, acc), do: scan_until_quote(rest, acc <> <<c::utf8>>)
+
+  # Scan a quoted value, treating a `"` as closing only when followed by
+  # whitespace, the start of the next pair (`"`), or end-of-string.
+  # This allows embedded quotes inside values (e.g. HTML in the Group field).
+  defp scan_quoted_value(str, acc \\ "")
+  defp scan_quoted_value("", acc), do: {acc, ""}
+
+  defp scan_quoted_value("\"" <> rest, acc) do
+    trimmed = String.trim_leading(rest)
+
+    if trimmed == "" or String.starts_with?(trimmed, "\"") do
+      {acc, rest}
+    else
+      scan_quoted_value(rest, acc <> "\"")
+    end
+  end
+
+  defp scan_quoted_value(<<c::utf8, rest::binary>>, acc), do: scan_quoted_value(rest, acc <> <<c::utf8>>)
 end
