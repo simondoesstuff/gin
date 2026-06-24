@@ -34,6 +34,7 @@ defmodule Gin.Meta.Transformers.Display do
     thickDrawItem exonArrows exonArrowsDense
     searchIndex searchTrix showTopScorers
     scoreFilter sepFields spectrum
+    bedNameLabel
   ]
 
   def transform(raw) do

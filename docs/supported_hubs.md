@@ -23,8 +23,10 @@ gin engine to index.
 | FANTOM5         | http://fantom.gsc.riken.jp/5/datahub/hub.txt                                                   |              18 | hg19, hg38, mm9, mm10, canFam3, rn6, rheMac8, galGal5 | CAGE-seq atlas. Interval tracks are peak/enhancer bigBeds only; per-sample CTSS bigWig signals are excluded. |
 | GTEx Analysis   | http://hgdownload.soe.ucsc.edu/hubs/gtexAnalysis/hub.txt                                       |             108 | hg19, hg38 | ASE and eQTL analysis bigBeds. No sample metadata in trackDb. |
 | ENCODE Integrative | https://storage.googleapis.com/gcp.wenglab.org/hubs/integrative52/hub.txt                  |           1,998 | hg38, mm10 | ENCODE cCRE registry. Rich cell-type data (483 unique values). Adds `cCRE` experiment type. |
+| DASHR v2        | https://dashr2.lisanwanglab.org/tracks/DASHR2_hub.txt                                          |           1,268 | hg19, hg38 | Human small ncRNA atlas. `subGroups.tissue` contains compound sample IDs (e.g. `osteoblast-rep1_ENCSR000CUW`), not vocab terms. |
+| IDEAS Roadmap   | http://bx.psu.edu/~yuzhang/Roadmap_ideas/ideas_hub.txt                                         |             127 | hg19       | Roadmap 20-state IDEAS chromatin segmentation. No biological metadata; `subGroups.type` holds broad tissue category codes — deferred until Roadmap Epigenomics support is added. |
 
-**Total reviewed: 80,213 interval tracks across 11 hubs (CEMT currently 404).**
+**Total reviewed: 81,608 interval tracks across 13 hubs (CEMT currently 404).**
 
 ---
 
@@ -36,9 +38,7 @@ Hubs we intend to add. Priority order is rough; each should be reviewed with `mi
 | -------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | GTEx RNA-seq         | http://hgdownload.soe.ucsc.edu/hubs/gtex/hub.txt                          | 7,572-sample RNA-seq signal hub. Currently 403 Forbidden from UCSC for programmatic access; likely all bigWig so low value after filtering.                                         |
 | Roadmap Epigenomics  | https://vizhub.wustl.edu/VizHub/RoadmapReleaseAll.txt                     | 273 tracks in hg19. Blocked: vizhub.wustl.edu closes TLS mid-handshake for Erlang clients. Metadata keys: `Anatomy`, `Type`, `EID`, `Ethnicity`, `Lab`. Worth fixing or mirroring. |
-| IDEAS Roadmap        | http://bx.psu.edu/~yuzhang/Roadmap_ideas/ideas_hub.txt                    | Roadmap 20-state segmentation from IDEAS. Minimal metadata (only subGroups). Low priority.                                                                                         |
 | ReMap 2022           | https://remap.univ-amu.fr/storage/public/hubReMap2022/hub.txt             | Single bigBed annotation track, not per-sample. No biological metadata to extract. Skip.                                                                                           |
-| DASHR v2             | https://dashr2.lisanwanglab.org/tracks/DASHR2_hub.txt                     | Small ncRNA hub. Worth auditing for ncRNA assay types.                                                                                                                             |
 
 ---
 

@@ -99,6 +99,7 @@ defmodule Gin.Meta.Transformers.Blueprint do
     rep mat deg phz src readType
     project
     category strand sequenceTech group
+    type
   ]
 
   # MethBase view codes — all are WGBS-derived bisulfite tracks.
