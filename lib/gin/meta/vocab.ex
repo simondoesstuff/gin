@@ -17,16 +17,18 @@ defmodule Gin.Meta.Vocab do
   `{canonical, [alias, ...]}` tuples. Matching is case-insensitive exact.
 
   The `:eterm` option takes a path relative to `priv/` pointing to an Erlang
-  term file (`.eterm`). Each entry is either a plain string (canonical only,
-  matched by slug) or a `{canonical, [alias, ...]}` tuple (explicit aliases
-  matched case-insensitively AND by slug). For large open-ended vocabs like
-  cell type and tissue, slug matching covers common separator/case variants
-  without requiring exhaustive alias lists.
+  term file (`.eterm`) for common (species-neutral) entries. The optional
+  `:eterm_human` and `:eterm_mouse` options load species-specific entries.
+  Each entry is either a plain string (canonical only, matched by slug) or a
+  `{canonical, [alias, ...]}` tuple (explicit aliases matched case-insensitively
+  AND by slug).
+
+  When species eterms are given, `normalize/2` is generated with `:human`,
+  `:mouse`, and `:any` dispatch. `normalize/1` always covers the full union.
 
   The `:obo` option takes a path relative to `priv/` pointing to an OBO 1.2
-  ontology file. All `[Term]` entries with `id: CL:` are parsed and merged
-  with the eterm entries. eterm entries take priority for slug conflicts —
-  manual curation always wins over ontology defaults.
+  ontology file. All `[Term]` entries with `id: CL:` are parsed and merged.
+  eterm entries take priority for slug conflicts — manual curation wins.
   """
 
   @doc "Return `{:ok, canonical}` or `{:unknown, raw}` for the given raw string."
@@ -45,14 +47,34 @@ defmodule Gin.Meta.Vocab do
   defmacro __using__(opts) do
     priv_dir = @priv_dir
 
-    {eterm_entries, eterm_path} =
+    # Common / base eterm (species-neutral)
+    {common_entries, common_path} =
       if eterm = Keyword.get(opts, :eterm) do
         path = Path.join(priv_dir, eterm)
         {Gin.Meta.Vocab.load_eterm!(path), path}
       else
-        {nil, nil}
+        {[], nil}
       end
 
+    # Human-specific eterm
+    {human_eterm_entries, human_eterm_path} =
+      if eterm = Keyword.get(opts, :eterm_human) do
+        path = Path.join(priv_dir, eterm)
+        {Gin.Meta.Vocab.load_eterm!(path), path}
+      else
+        {[], nil}
+      end
+
+    # Mouse-specific eterm
+    {mouse_eterm_entries, mouse_eterm_path} =
+      if eterm = Keyword.get(opts, :eterm_mouse) do
+        path = Path.join(priv_dir, eterm)
+        {Gin.Meta.Vocab.load_eterm!(path), path}
+      else
+        {[], nil}
+      end
+
+    # OBO ontology
     {obo_entries, obo_path} =
       if obo = Keyword.get(opts, :obo) do
         path = Path.join(priv_dir, obo)
@@ -61,33 +83,43 @@ defmodule Gin.Meta.Vocab do
         {[], nil}
       end
 
-    # eterm entries take priority: their slugs are inserted first (Map.put_new),
-    # so OBO entries only fill in gaps not covered by manual curation.
-    {entries, use_slug} =
+    has_species = human_eterm_entries != [] || mouse_eterm_entries != []
+
+    # Union of all entries for normalize/1; eterm sources win over OBO
+    all_eterm = common_entries ++ human_eterm_entries ++ mouse_eterm_entries
+    all_entries = all_eterm ++ obo_entries
+
+    # Species-filtered entry sets (common + species + OBO)
+    human_entries = common_entries ++ human_eterm_entries ++ obo_entries
+    mouse_entries = common_entries ++ mouse_eterm_entries ++ obo_entries
+
+    # use_slug: true when any eterm or OBO source is present
+    {final_entries, use_slug} =
       cond do
-        eterm_entries ->
-          {eterm_entries ++ obo_entries, true}
-
-        obo_entries != [] ->
-          {obo_entries, true}
-
-        true ->
-          {Keyword.fetch!(opts, :entries), false}
+        all_entries != [] -> {all_entries, true}
+        true -> {Keyword.fetch!(opts, :entries), false}
       end
 
     quote bind_quoted: [
-            entries: entries,
-            eterm_path: eterm_path,
-            obo_path: obo_path,
-            use_slug: use_slug
+            final_entries: final_entries,
+            human_entries: human_entries,
+            mouse_entries: mouse_entries,
+            has_species: has_species,
+            use_slug: use_slug,
+            common_path: common_path,
+            human_eterm_path: human_eterm_path,
+            mouse_eterm_path: mouse_eterm_path,
+            obo_path: obo_path
           ] do
       @behaviour Gin.Meta.Vocab
 
-      if eterm_path, do: @external_resource(eterm_path)
+      if common_path, do: @external_resource(common_path)
+      if human_eterm_path, do: @external_resource(human_eterm_path)
+      if mouse_eterm_path, do: @external_resource(mouse_eterm_path)
       if obo_path, do: @external_resource(obo_path)
 
-      @lookup Gin.Meta.Vocab.build_lookup(entries)
-      @members Enum.map(entries, &elem(&1, 0))
+      @lookup Gin.Meta.Vocab.build_lookup(final_entries)
+      @members final_entries |> Enum.map(&elem(&1, 0)) |> Enum.uniq()
 
       @impl true
       def members, do: @members
@@ -96,7 +128,7 @@ defmodule Gin.Meta.Vocab do
       def known?(raw), do: match?({:ok, _}, normalize(raw))
 
       if use_slug do
-        @slug_lookup Gin.Meta.Vocab.build_slug_lookup(entries)
+        @slug_lookup Gin.Meta.Vocab.build_slug_lookup(final_entries)
 
         @impl true
         def normalize(raw) do
@@ -113,6 +145,45 @@ defmodule Gin.Meta.Vocab do
               {:ok, canonical}
           end
         end
+
+        if has_species do
+          @lookup_human Gin.Meta.Vocab.build_lookup(human_entries)
+          @slug_lookup_human Gin.Meta.Vocab.build_slug_lookup(human_entries)
+          @lookup_mouse Gin.Meta.Vocab.build_lookup(mouse_entries)
+          @slug_lookup_mouse Gin.Meta.Vocab.build_slug_lookup(mouse_entries)
+
+          def normalize(raw, :human) do
+            key = String.downcase(raw)
+
+            case Map.get(@lookup_human, key) do
+              nil ->
+                case Map.get(@slug_lookup_human, Gin.Meta.Vocab.slugify(key)) do
+                  nil -> {:unknown, raw}
+                  canonical -> {:ok, canonical}
+                end
+
+              canonical ->
+                {:ok, canonical}
+            end
+          end
+
+          def normalize(raw, :mouse) do
+            key = String.downcase(raw)
+
+            case Map.get(@lookup_mouse, key) do
+              nil ->
+                case Map.get(@slug_lookup_mouse, Gin.Meta.Vocab.slugify(key)) do
+                  nil -> {:unknown, raw}
+                  canonical -> {:ok, canonical}
+                end
+
+              canonical ->
+                {:ok, canonical}
+            end
+          end
+
+          def normalize(raw, :any), do: normalize(raw)
+        end
       else
         @impl true
         def normalize(raw) do
@@ -124,6 +195,22 @@ defmodule Gin.Meta.Vocab do
       end
     end
   end
+
+  @doc """
+  Map a genome assembly string to a species atom for use with `normalize/2`.
+
+  Returns `:human` for hg* assemblies, `:mouse` for mm* assemblies, and
+  `:unknown` for anything else (including nil).
+  """
+  def assembly_species(assembly) when is_binary(assembly) do
+    cond do
+      String.starts_with?(assembly, "hg") -> :human
+      String.starts_with?(assembly, "mm") -> :mouse
+      true -> :unknown
+    end
+  end
+
+  def assembly_species(_), do: :unknown
 
   @doc """
   Convert a string to a lookup slug: lowercase, collapse non-alphanumeric runs

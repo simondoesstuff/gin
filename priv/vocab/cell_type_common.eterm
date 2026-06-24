@@ -1,0 +1,53 @@
+%% Cell type vocabulary — shared terms applicable to both human and mouse.
+%%
+%% Format:
+%%   "Canonical Name"                           -- slug-matched variants covered automatically
+%%   {"Canonical Name", ["Alias1", "Alias2"]}   -- explicit aliases for non-slug-derivable variants
+%%
+%% VISION mouse hematopoietic abbreviations (ERY, GMP, etc.) are included here
+%% as aliases on common cell types so they resolve in species-filtered lookups.
+[
+  %% ---- Primary blood / immune cells ----
+  {"CD14+ classical monocyte", ["CD14+_classical_monocyte",
+                                "CD14+_Monocyte", "CD14+ Monocyte",
+                                "monocyte", "Monocyte",
+                                "mono", "Mono", "MON"]},
+  {"CD14+ CD16- classical monocyte", ["CD14+CD16-_monocyte"]},
+  {"CD34+ progenitor cell", ["CD34+_progenitor", "CD34+",
+                             "CD34 progenitor", "cd34+"]},
+  {"CD4+ T cell", ["CD4+_T_cell", "CD4_T_cell", "cd4+ t cell",
+                   "T-cell CD4+", "cd4", "TCD4"]},
+  {"CD8+ T cell", ["CD8+_T_cell", "CD8_T_cell", "cd8+ t cell",
+                   "T-cell CD8+", "cd8", "TCD8"]},
+  {"CD4+ regulatory T cell", ["Treg", "treg", "T-regulatory",
+                               "regulatory T cell", "CD4+_regulatory_T_cell"]},
+  {"natural killer cell", ["NK cell", "NK_cell", "nk cell", "nk_cell",
+                           "Natural_Killer_cell", "NK"]},
+  {"B cell", ["B_cell", "b cell", "b_cell",
+              "naive B cell", "naive_B_cell", "b"]},
+  {"neutrophil", ["Neutrophil", "neu", "NEU", "Neu"]},
+  {"eosinophil", ["Eosinophil"]},
+  {"megakaryocyte", ["Megakaryocyte", "megakaryocytes",
+                     "MEGAKARYO", "MEGS", "megs", "MEGAD"]},
+  {"erythroblast", ["Erythroblast", "ERY", "ery", "ERYFL"]},
+  {"macrophage", ["Macrophage", "macrophages"]},
+  {"common myeloid progenitor", ["CMP", "cmp", "common_myeloid_progenitor"]},
+  {"granulocyte-monocyte progenitor", ["GMP", "gmp"]},
+  {"granulocyte", ["Granulocyte", "granulocytes", "gra", "GRA"]},
+  {"monocyte derived dendritic cell", ["moDC", "modc",
+                                       "monocyte-derived_dendritic_cell"]},
+  {"plasmacytoid dendritic cell", ["pDC", "pdc",
+                                   "plasmacytoid_dendritic_cell"]},
+  {"myeloid dendritic cell", ["mDC", "mdc", "myeloid_dendritic_cell"]},
+
+  %% ---- Generic cell types ----
+  {"fibroblast", ["Fibroblast", "fibroblasts"]},
+  {"neuronal stem cell", ["neuronal_stem_cell", "Neuronal_Stem_Cell"]},
+
+  %% ---- Blueprint-specific subtypes not covered by CL ----
+  "endothelial cell of umbilical vein (proliferating)",
+  "endothelial cell of umbilical vein (resting)",
+  "CD3-positive, CD4-positive, CD8-positive, double-positive thymocyte",
+  "CD3-negative, CD4-positive, CD8-positive, double-positive thymocyte",
+  "precursor lymphocyte of B lineage"
+].

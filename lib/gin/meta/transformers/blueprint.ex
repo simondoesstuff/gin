@@ -151,15 +151,16 @@ defmodule Gin.Meta.Transformers.Blueprint do
   }
 
   def transform(raw) do
+    species = Vocab.assembly_species(Map.get(raw, "_assembly"))
     {attrs, consumed} = {%{}, MapSet.new()}
-    {attrs, consumed} = from_metadata(attrs, consumed, raw)
-    {attrs, consumed} = from_subgroups(attrs, consumed, raw)
+    {attrs, consumed} = from_metadata(attrs, consumed, raw, species)
+    {attrs, consumed} = from_subgroups(attrs, consumed, raw, species)
     {attrs, consumed}
   end
 
   # --- metadata field -------------------------------------------------------
 
-  defp from_metadata(attrs, consumed, %{"metadata" => meta}) when is_map(meta) do
+  defp from_metadata(attrs, consumed, %{"metadata" => meta}, species) when is_map(meta) do
     {attrs, consumed} =
       Enum.reduce(@metadata_mappings, {attrs, consumed}, fn {mk, field, norm_fn}, {a, c} ->
         case Map.get(meta, mk) do
@@ -171,7 +172,12 @@ defmodule Gin.Meta.Transformers.Blueprint do
             if Map.has_key?(a, field) do
               {a, MapSet.put(c, "metadata.#{mk}")}
             else
-              val = apply_norm(raw_val, norm_fn)
+              effective_norm =
+                if field == :cell_type and species != :unknown,
+                  do: &Vocab.CellType.normalize(&1, species),
+                  else: norm_fn
+
+              val = apply_norm(raw_val, effective_norm)
               {Map.put(a, field, val), MapSet.put(c, "metadata.#{mk}")}
             end
         end
@@ -276,11 +282,11 @@ defmodule Gin.Meta.Transformers.Blueprint do
     {attrs, consumed}
   end
 
-  defp from_metadata(attrs, consumed, _raw), do: {attrs, consumed}
+  defp from_metadata(attrs, consumed, _raw, _species), do: {attrs, consumed}
 
   # --- subGroups field -------------------------------------------------------
 
-  defp from_subgroups(attrs, consumed, %{"subGroups" => sg}) when is_map(sg) do
+  defp from_subgroups(attrs, consumed, %{"subGroups" => sg}, species) when is_map(sg) do
     lifts = [
       {:cell_type, @cell_type_sg_keys, &Vocab.CellType.normalize/1},
       {:tissue, @tissue_sg_keys, &Vocab.Tissue.normalize/1},
@@ -307,7 +313,12 @@ defmodule Gin.Meta.Transformers.Blueprint do
             if Map.has_key?(a, field) do
               {a, c}
             else
-              case apply_norm(raw_val, norm_fn) do
+              effective_norm =
+                if field == :cell_type and species != :unknown,
+                  do: &Vocab.CellType.normalize(&1, species),
+                  else: norm_fn
+
+              case apply_norm(raw_val, effective_norm) do
                 nil -> {a, c}
                 val -> {Map.put(a, field, val), c}
               end
@@ -324,7 +335,7 @@ defmodule Gin.Meta.Transformers.Blueprint do
     {attrs, consumed}
   end
 
-  defp from_subgroups(attrs, consumed, _raw), do: {attrs, consumed}
+  defp from_subgroups(attrs, consumed, _raw, _species), do: {attrs, consumed}
 
   # --- helpers ---------------------------------------------------------------
 

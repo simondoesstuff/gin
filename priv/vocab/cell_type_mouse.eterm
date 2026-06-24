@@ -1,0 +1,17 @@
+%% Cell type vocabulary — mouse-specific terms.
+%%
+%% Primarily VISION/PSU hematopoietic cell lines and their hub-specific
+%% abbreviations. Common blood cell abbreviations (ERY, GMP, etc.) live in
+%% cell_type_common.eterm as aliases on the shared canonicals.
+[
+  %% ---- VISION mouse erythroid / hematopoietic cell lines ----
+  {"G1E", ["g1e"]},
+  {"G1E-ER4", ["G1E_ER4", "g1e-er4", "g1e_er4", "er4", "ER4", "er4u", "K1_ER"]},
+  {"G1E-ER4 estradiol", ["G1E_ER4_E2", "g1e_er4_e2", "er4_e2", "G1E_ER4_estradiol"]},
+  {"MEL", ["mel", "DBA_2_MEL", "DBA_2_MEL_cell_line", "MEL_cell_line", "MEL_14"]},
+  {"LSK", ["lsk", "LSK_cell", "lin_neg_sca1_pos_ckit_pos"]},
+  {"CFU-E", ["CFUE", "cfue", "cfu-e"]},
+  {"CFU-Mk", ["CFUMk", "cfumk", "cfu-mk", "cfum", "CFUM"]},
+  {"CH12", ["ch12", "CH12_LX"]},
+  {"HPC7", ["hpc7"]}
+].
