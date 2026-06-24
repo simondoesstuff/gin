@@ -1,0 +1,168 @@
+%% Cell type controlled vocabulary for Gin.
+%%
+%% Format:
+%%   "Canonical Name"                           -- slug-matched variants covered automatically
+%%   {"Canonical Name", ["Alias1", "Alias2"]}   -- explicit aliases for non-slug-derivable variants
+%%
+%% Slug matching covers common separator/case variants automatically, e.g.
+%% "Brain Hippocampus Middle", "brain-hippocampus-middle", and
+%% "Brain_Hippocampus_Middle" all resolve to the same canonical.
+%%
+%% Explicit alias lists are needed for:
+%%   - Abbreviations (e.g. "H1-hESC" -> "H1 ESC")
+%%   - Codes that don't slug to the canonical (e.g. "BRN.HIPP.MID")
+%%   - Hyphenated names where the hyphen is meaningful (e.g. "IMR-90")
+[
+  %% ---- Pluripotent stem cells ----
+  {"H1 ESC", ["H1-hESC", "H1_hESC", "H1hESC", "H1", "H1_ESC",
+              "H1 Cells", "H1_Cells"]},
+  {"HUES64", ["hues64", "HUES-64"]},
+  {"HUES48", ["hues48", "HUES-48"]},
+  {"iPSC", ["ipsc", "induced pluripotent stem cell",
+            "induced_pluripotent_stem_cell"]},
+
+  %% ---- ESC-derived lineages (Roadmap H1-derived) ----
+  {"H1 Derived Neuronal Progenitor Cultured Cells",
+   ["H1_Derived_Neuronal_Progenitor_Cultured_Cells"]},
+  {"H1 Derived Mesenchymal Stem Cells",
+   ["H1_Derived_Mesenchymal_Stem_Cells"]},
+  {"H1 Derived CD184+ Endodermal Cultured Cells",
+   ["H1_Derived_CD184_Endodermal_Cultured_Cells"]},
+  {"H1 Derived Trophoblast Cultured Cells",
+   ["H1_Derived_Trophoblast_Cultured_Cells"]},
+  {"HUES64 Derived CD184+ Endodermal Cultured Cells",
+   ["HUES64_Derived_CD184_Endodermal_Cultured_Cells"]},
+
+  %% ---- Common cancer / immortal cell lines ----
+  "K562",
+  "GM12878",
+  "HepG2",
+  {"MCF-7", ["MCF7", "mcf7", "mcf-7"]},
+  {"A549", ["a549"]},
+  {"HCT116", ["hct116"]},
+  {"HeLa", ["hela", "HeLa-S3", "hela-s3"]},
+  {"IMR-90", ["IMR90", "imr90", "imr-90"]},
+  {"SK-N-SH", ["sknsh", "sk-n-sh", "SK_N_SH"]},
+  {"SJSA1", ["sjsa1"]},
+  {"Panc1", ["panc1", "PANC-1", "panc-1"]},
+  {"NCI-H460", ["nci-h460", "ncih460"]},
+  {"T47D", ["t47d"]},
+  {"LNCAP", ["lncap", "LNCaP"]},
+
+  %% ---- Primary blood / immune cells (Blueprint / IHEC) ----
+  {"CD14+ classical monocyte", ["CD14+_classical_monocyte",
+                                "CD14+_Monocyte", "CD14+ Monocyte",
+                                "monocyte", "Monocyte"]},
+  {"CD14+ CD16- classical monocyte", ["CD14+CD16-_monocyte"]},
+  {"CD34+ progenitor cell", ["CD34+_progenitor", "CD34+",
+                             "CD34 progenitor", "cd34+"]},
+  {"CD4+ T cell", ["CD4+_T_cell", "CD4_T_cell", "cd4+ t cell",
+                   "T-cell CD4+"]},
+  {"CD8+ T cell", ["CD8+_T_cell", "CD8_T_cell", "cd8+ t cell",
+                   "T-cell CD8+"]},
+  {"CD4+ regulatory T cell", ["Treg", "treg", "T-regulatory",
+                               "regulatory T cell", "CD4+_regulatory_T_cell"]},
+  {"natural killer cell", ["NK cell", "NK_cell", "nk cell", "nk_cell",
+                           "Natural_Killer_cell", "NK"]},
+  {"B cell", ["B_cell", "b cell", "b_cell",
+              "naive B cell", "naive_B_cell"]},
+  {"neutrophil", ["Neutrophil"]},
+  {"eosinophil", ["Eosinophil"]},
+  {"megakaryocyte", ["Megakaryocyte", "megakaryocytes"]},
+  {"erythroblast", ["Erythroblast"]},
+  {"macrophage", ["Macrophage", "macrophages"]},
+  {"common myeloid progenitor", ["CMP", "cmp",
+                                 "common_myeloid_progenitor"]},
+  {"granulocyte", ["Granulocyte", "granulocytes"]},
+  {"monocyte derived dendritic cell", ["moDC", "modc",
+                                        "monocyte-derived_dendritic_cell"]},
+  {"plasmacytoid dendritic cell", ["pDC", "pdc",
+                                   "plasmacytoid_dendritic_cell"]},
+  {"myeloid dendritic cell", ["mDC", "mdc", "myeloid_dendritic_cell"]},
+
+  %% ---- Roadmap Epigenomics -- Standardized_Epigenome_name values ----
+  %% Brain epigenomes (slug matching handles separator variants)
+  "Brain Hippocampus Middle",
+  "Brain Substantia Nigra",
+  "Brain Inferior Temporal Lobe",
+  "Brain Angular Gyrus",
+  "Brain Cingulate Gyrus",
+  "Brain Mid Frontal Lobe",
+  "Brain Anterior Caudate",
+  "Brain Germinal Matrix",
+  "Brain Neurosphere Derived Cultured Cells Cortex Derived",
+  "Brain Neurosphere Derived Cultured Cells Ganglionic Eminence Derived",
+  "Fetal Brain Male",
+  "Fetal Brain Female",
+  "NH-A Astrocytes",
+
+  %% Blood / immune (Roadmap)
+  "CD14+ Monocytes",
+  "CD19+ B Cells",
+  "CD3+ T Cells",
+  "CD34+ Mobilized",
+  "CD56+ Natural Killer Cells",
+  "CD4+ CD25- CD45RA+ Naive Primary T Cells",
+  "CD4+ CD25- CD45RO+ Memory Primary T Cells",
+  "CD4+ CD25- TH1 Primary Cells",
+  "CD4+ CD25- TH2 Primary Cells",
+  "CD4+ CD25- TH17 Primary Cells",
+  "CD4+ CD25+ CD127- Regulatory T Cells",
+  "CD4+ Memory Primary Cells",
+  "CD4+ Naive Primary Cells",
+  "CD8+ Memory Primary Cells",
+  "CD8+ Naive Primary Cells",
+
+  %% Epithelial / other Roadmap samples
+  "Fetal Kidney",
+  "Fetal Lung",
+  "Fetal Muscle Trunk",
+  "Fetal Muscle Leg",
+  "Fetal Heart",
+  "Fetal Intestine Large",
+  "Fetal Intestine Small",
+  "Fetal Placenta",
+  "Fetal Stomach",
+  "Fetal Thymus",
+  "Fetal Adrenal Gland",
+  {"neuronal stem cell", ["neuronal_stem_cell", "Neuronal_Stem_Cell"]},
+  "Breast Myoepithelial Primary Cells",
+  "Breast Luminal Epithelial Primary Cells",
+  "Primary hematopoietic stem cells",
+  "Primary hematopoietic stem cells G-CSF-mobilized Male",
+  "Primary hematopoietic stem cells G-CSF-mobilized Female",
+  "Primary mononuclear cells from peripheral blood",
+
+  %% Mesenchymal / fibroblast
+  {"fibroblast", ["Fibroblast", "fibroblasts"]},
+  "Foreskin Fibroblast Primary Cells Skin02",
+  "Foreskin Keratinocyte Primary Cells skin03",
+  "Foreskin Melanocyte Primary Cells skin01",
+  "Adipose Nuclei",
+  "Bone Marrow Derived Cultured Mesenchymal Stem Cells",
+  "Chondrospheres from Bone Marrow Derived MSCs",
+  "Osteoblast Primary Cells",
+
+  %% Endodermal / gastrointestinal
+  "Rectal Mucosal Resection Sigmoid",
+  "Colonic Mucosa",
+  "Duodenum Mucosa",
+  "Gastric",
+  "Small Intestine",
+  "Liver",
+
+  %% Other commonly encountered cell types
+  {"HEK293", ["hek293", "HEK-293", "HEK293T", "hek293t"]},
+  {"Jurkat", ["jurkat"]},
+  {"THP-1", ["thp1", "thp-1"]},
+  {"U2OS", ["u2os"]},
+  {"HFF", ["hff"]},
+  {"HAP1", ["hap1"]},
+  {"U87", ["u87"]},
+  {"786-O", ["786o"]},
+  {"BJAB", ["bjab"]},
+  {"Karpas-422", ["karpas422", "karpas-422"]},
+  {"OCI-LY3", ["ocily3"]},
+  {"OCI-LY7", ["ocily7"]},
+  {"Pfeiffer", ["pfeiffer"]}
+].

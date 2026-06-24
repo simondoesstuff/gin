@@ -14,7 +14,7 @@ defmodule Gin.Meta.Transformers.Blueprint do
     {"BIOMATERIAL_TYPE", :biomaterial_type, &Vocab.BiomaterialType.normalize/1},
     {"MOLECULE", :molecule, &Vocab.Molecule.normalize/1},
     {"EXPERIMENT_TYPE", :experiment_type, &Vocab.ExperimentType.normalize/1},
-    {"CELL_TYPE", :cell_type, nil},
+    {"CELL_TYPE", :cell_type, &Vocab.CellType.normalize/1},
     {"DONOR_ID", :donor_id, nil},
     {"DONOR_AGE", :donor_age, nil},
     {"age", :donor_age, nil},
@@ -24,7 +24,7 @@ defmodule Gin.Meta.Transformers.Blueprint do
     {"DONOR_ETHNICITY", :donor_ethnicity, nil},
     {"DONOR_HEALTH_STATUS", :donor_health_status, nil},
     {"DISEASE", :disease, nil},
-    {"TISSUE_TYPE", :tissue, nil},
+    {"TISSUE_TYPE", :tissue, &Vocab.Tissue.normalize/1},
     {"SAMPLE_ID", :sample_id, nil},
     {"EXPERIMENT_ID", :experiment_id, nil},
     {"accession", :accession, nil},
@@ -39,8 +39,8 @@ defmodule Gin.Meta.Transformers.Blueprint do
     {"biomaterial_type", :biomaterial_type, &Vocab.BiomaterialType.normalize/1},
     {"molecule", :molecule, &Vocab.Molecule.normalize/1},
     {"experiment_type", :experiment_type, &Vocab.ExperimentType.normalize/1},
-    {"cell_type", :cell_type, nil},
-    {"tissue_type", :tissue, nil},
+    {"cell_type", :cell_type, &Vocab.CellType.normalize/1},
+    {"tissue_type", :tissue, &Vocab.Tissue.normalize/1},
     {"sample_id", :sample_id, nil},
     {"donor_id", :donor_id, nil},
     {"donor_age", :donor_age, nil},
@@ -54,17 +54,17 @@ defmodule Gin.Meta.Transformers.Blueprint do
     {"ontology_id", :sample_id, nil},
 
     # Roadmap Epigenomics quoted metadata fields (key names after quote-stripping)
-    {"Standardized_Epigenome_name", :cell_type, nil},
+    {"Standardized_Epigenome_name", :cell_type, &Vocab.CellType.normalize/1},
     {"Age", :donor_age, nil},
     {"Sex", :donor_sex, &Vocab.Sex.normalize/1},
-    {"Anatomy", :tissue, nil},
+    {"Anatomy", :tissue, &Vocab.Tissue.normalize/1},
     {"EID", :sample_id, nil},
     {"Ethnicity", :donor_ethnicity, nil},
     {"Lab", :analysis_group, nil},
     # "Type" is handled as a special case below — value determines semantics
 
     # Roadmap CompRoadmap unquoted metadata fields
-    {"Sample", :cell_type, nil},
+    {"Sample", :cell_type, &Vocab.CellType.normalize/1},
     {"Assay", :experiment_type, &Vocab.ExperimentType.normalize/1},
     {"OutputType", :analysis_type, nil},
 
@@ -282,7 +282,7 @@ defmodule Gin.Meta.Transformers.Blueprint do
 
   defp from_subgroups(attrs, consumed, %{"subGroups" => sg}) when is_map(sg) do
     lifts = [
-      {:cell_type, @cell_type_sg_keys, nil},
+      {:cell_type, @cell_type_sg_keys, &Vocab.CellType.normalize/1},
       {:tissue, @tissue_sg_keys, &Vocab.Tissue.normalize/1},
       {:analysis_group, @analysis_group_sg_keys, nil},
       {:analysis_type, @analysis_type_sg_keys, nil},

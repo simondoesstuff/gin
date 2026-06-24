@@ -38,7 +38,7 @@ defmodule Mix.Tasks.Gin.Audit do
     {"experiment.target", [:experiment, :target], nil},
     {"experiment.molecule", [:experiment, :molecule], Vocab.Molecule},
     {"sample.biomaterial_type", [:sample, :biomaterial_type], Vocab.BiomaterialType},
-    {"sample.cell_type", [:sample, :cell_type], nil},
+    {"sample.cell_type", [:sample, :cell_type], Vocab.CellType},
     {"sample.tissue", [:sample, :tissue], Vocab.Tissue},
     {"sample.donor.sex", [:sample, :donor, :sex], Vocab.Sex},
     {"sample.donor.ethnicity", [:sample, :donor, :ethnicity], nil},
